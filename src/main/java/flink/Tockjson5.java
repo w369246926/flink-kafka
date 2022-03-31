@@ -72,6 +72,26 @@ public class Tockjson5 {
                     long date = new Date().getTime();
                     jsonObject.put("date",date);
                     out.collect(jsonObject);
+
+                /*JSONArray basicMessageBasicList = jsonObject.getJSONArray("basicMessageBasicList");
+                Map map = new HashMap();
+                //遍历告警JSON
+                for (int i = 0; i < basicMessageBasicList.size(); i++) {
+                    map = basicMessageBasicList.getJSONObject(i);
+                    if (map.get("protocolType").equals(6)) {
+                        map.put("protocolType", "TCP");
+                        out.collect(jsonObject);
+                    } else if (map.get("protocolType").equals(17)) {
+                        map.put("protocolType", "UDP");
+                        out.collect(jsonObject);
+                    } else if (map.get("protocolType").equals(1)) {
+                        map.put("protocolType", "ICIP");
+                        out.collect(jsonObject);
+                    } else {
+                        map.put("protocolType", "模拟");
+                        out.collect(jsonObject);
+                    }
+                }*/
             }
         });
         //2,将数据拆分成两个流,1:伪装和标签,2:变形
@@ -86,7 +106,18 @@ public class Tockjson5 {
                 //遍历告警JSON
                 for (int i = 0; i < basicMessageBasicList.size(); i++) {
                     map = basicMessageBasicList.getJSONObject(i);
-                    Object verifyFunctionModuleCode = map.get("verifyFunctionModuleCode");
+                    if (map.get("protocolType") != null){
+                        if (map.get("protocolType").equals(6) ) {
+                        map.put("protocolType", "TCP");
+                    } else if (map.get("protocolType").equals(17)) {
+                        map.put("protocolType", "UDP");
+                    } else if (map.get("protocolType").equals(1)) {
+                        map.put("protocolType", "ICMP");
+                    } else {
+                        map.put("protocolType", "模拟");
+                    }
+                    }
+                    //Object verifyFunctionModuleCode = map.get("verifyFunctionModuleCode");
                     //System.out.println(verifyFunctionModuleCode);
                     if (map.get("verifyFunctionModuleCode").equals(6)) {
                         map.put("verifyFunctionModuleCode", "变形");
@@ -166,6 +197,7 @@ public class Tockjson5 {
 
         //3,伪装和标签直接存储到A表,结束
         camouflageandlabel1.addSink(new ckSinkA());
+        camouflageandlabel1.print("写入A数据库完成");
 
         //5,变形进行按照时间归并:5分钟归并一次,取时间最大值,并存储到A表
         SingleOutputStreamOperator<JSONObject> apply = transformation2.keyBy(t -> {
@@ -211,7 +243,9 @@ public class Tockjson5 {
                 });
 
         apply.addSink(new ckSinkB());
+        apply.print("写入B数据库完成");
         apply.addSink(new ckSinkA1());
+        apply.print("归并完成");
 
 
 
@@ -287,7 +321,7 @@ public class Tockjson5 {
                     String sqlkey = columns.toString();
                     String sqlvalue = values.toString();
                     sql = "INSERT INTO default.report ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                    System.out.println("A表");
+                    //System.out.println("A表");
                     stmt.executeQuery(sql);
                 }
             }catch (Exception e){
@@ -323,7 +357,6 @@ public class Tockjson5 {
     @Override
     public void invoke(JSONObject value, Context context) throws Exception {
         Object size = value.get("size");
-        System.out.println(size);
         if (size != null){
             return;
         }
@@ -370,7 +403,7 @@ public class Tockjson5 {
                 String sqlkey = columns.toString();
                 String sqlvalue = values.toString();
                 sql = "INSERT INTO default.report_deformation ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                System.out.println("B表");
+                //System.out.println("B表");
                 stmt.executeQuery(sql);
             }
         }catch (Exception e){
@@ -405,7 +438,6 @@ public class Tockjson5 {
         @Override
         public void invoke(JSONObject value, Context context) throws Exception {
             Object size = value.get("size");
-            System.out.println("size");
             if (size == null){
                 return;
             }
@@ -452,7 +484,7 @@ public class Tockjson5 {
                     String sqlkey = columns.toString();
                     String sqlvalue = values.toString();
                     sql = "INSERT INTO default.report ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                    System.out.println("A1表"+sql);
+                    //System.out.println("A1表"+sql);
                     stmt.executeQuery(sql);
                 }
             }catch (Exception e){
