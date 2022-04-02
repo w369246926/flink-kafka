@@ -67,7 +67,10 @@ public class Tockjson5 {
             @Override
             public void flatMap(String value, Collector<JSONObject> out) throws Exception {
                     JSONObject jsonObject = JSONObject.parseObject(value);
-                    //jsonObject.put("uuid", UUID.randomUUID());
+
+
+
+
                     jsonObject.put("uuid", IdUtil.simpleUUID());
                     long date = new Date().getTime();
                     jsonObject.put("date",date);
@@ -149,13 +152,15 @@ public class Tockjson5 {
                         else map.put("verifyTypeId", "模拟");
                         context.output(camouflageandlabel, jsonObject);
                     }
-                    else map.put("verifyFunctionModuleCode", "标签");
-                    if (map.get("verifyTypeId").equals(1))
-                        map.put("verifyTypeId", "安全标签告警");
-                    else if (map.get("verifyTypeId").equals(2))
-                        map.put("verifyTypeId", "标签错误告警");
-                    else map.put("verifyTypeId", "模拟");
-                    context.output(camouflageandlabel, jsonObject);
+                    else {
+                        map.put("verifyFunctionModuleCode", "标签");
+                        if (map.get("verifyTypeId").equals(1))
+                            map.put("verifyTypeId", "安全标签告警");
+                        else if (map.get("verifyTypeId").equals(2))
+                            map.put("verifyTypeId", "标签错误告警");
+                        else map.put("verifyTypeId", "模拟");
+                        context.output(camouflageandlabel, jsonObject);
+                    }
 
                 }
             }
@@ -212,12 +217,6 @@ public class Tockjson5 {
 
         apply.addSink(new ckSinkB());
         apply.addSink(new ckSinkA1());
-
-
-
-        //reduce.print();
-        //reduce.addSink(new ckSinkA1());
-
         env.execute();
     }
 
