@@ -66,16 +66,23 @@ public class Tockjson5 {
 
             @Override
             public void flatMap(String value, Collector<JSONObject> out) throws Exception {
-                    JSONObject jsonObject = JSONObject.parseObject(value);
-
-
-
-
+                JSONObject jsonObject = JSONObject.parseObject(value);
+                //获取所有告警的JSON
+                JSONArray basicMessageBasicList = jsonObject.getJSONArray("basicMessageBasicList");
+                Map map = new HashMap();
+                //遍历告警LIST
+                for (int i = 0; i < basicMessageBasicList.size(); i++) {
+                    //遍历第 i 个json
+                    map = basicMessageBasicList.getJSONObject(i);
+                    jsonObject.putAll(map);
+                    //jsonObject.put(map);
                     jsonObject.put("uuid", IdUtil.simpleUUID());
                     long date = new Date().getTime();
-                    jsonObject.put("date",date);
+                    jsonObject.put("date", date);
                     out.collect(jsonObject);
+                }
             }
+
         });
         //2,将数据拆分成两个流,1:伪装和标签,2:变形
         OutputTag<JSONObject> camouflageandlabel = new OutputTag<JSONObject>("伪装和标签", TypeInformation.of(JSONObject.class));
@@ -92,7 +99,7 @@ public class Tockjson5 {
                     Object verifyFunctionModuleCode = map.get("verifyFunctionModuleCode");
                     //System.out.println(verifyFunctionModuleCode);
                     if (map.get("verifyFunctionModuleCode").equals(6)) {
-                        map.put("verifyFunctionModuleCode", "变形");
+                        map.put("verifyFunctionModuleCode", "网络变形");
                         if (map.get("verifyTypeId").equals(1))
                             map.put("verifyTypeId", "标签目的地址未在白名单告警");
                         else if (map.get("verifyTypeId").equals(2))
@@ -109,7 +116,7 @@ public class Tockjson5 {
                         context.output(transformation, jsonObject);
                     }
                     else if (map.get("verifyFunctionModuleCode").equals(4)) {
-                        map.put("verifyFunctionModuleCode", "隐身");
+                        map.put("verifyFunctionModuleCode", "网络隐身");
                         if (map.get("verifyTypeId").equals(1))
                             map.put("verifyTypeId", "隐身ARP告警");
                         else if (map.get("verifyTypeId").equals(0))
@@ -118,7 +125,7 @@ public class Tockjson5 {
                         context.output(camouflageandlabel, jsonObject);
                     }
                     else if (map.get("verifyFunctionModuleCode").equals(5)) {
-                        map.put("verifyFunctionModuleCode", "伪装");
+                        map.put("verifyFunctionModuleCode", "网络伪装");
                         if (map.get("verifyTypeId").equals(1))
                             map.put("verifyTypeId", "攻击会话开始告警");
                         else if (map.get("verifyTypeId").equals(2))
@@ -153,7 +160,7 @@ public class Tockjson5 {
                         context.output(camouflageandlabel, jsonObject);
                     }
                     else {
-                        map.put("verifyFunctionModuleCode", "标签");
+                        map.put("verifyFunctionModuleCode", "安全标签");
                         if (map.get("verifyTypeId").equals(1))
                             map.put("verifyTypeId", "安全标签告警");
                         else if (map.get("verifyTypeId").equals(2))
@@ -215,9 +222,9 @@ public class Tockjson5 {
                     }
                 });
 
-        apply.addSink(new ckSinkB());
-        apply.addSink(new ckSinkA1());
-        env.execute();
+        apply.addSink(new ckSinkB());//进行判断是否为归并表
+        apply.addSink(new ckSinkA1());//进行判断是否为归并表
+        env.execute("数据归并");
     }
 
     private static class ckSinkA extends RichSinkFunction<JSONObject> {
