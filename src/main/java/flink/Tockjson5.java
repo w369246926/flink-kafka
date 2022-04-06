@@ -33,15 +33,15 @@ import java.util.*;
 public class Tockjson5 {
     public static void main(String[] args) throws Exception {
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
-        String min = "10";
-        if (parameterTool.has("min")) {
-            min = parameterTool.get("min");
-            System.out.println("指定了归并时间:" + min +"秒");
+        String second = "10";
+        if (parameterTool.has("second")) {
+            second = parameterTool.get("second");
+            System.out.println("指定了归并时间:" + second +"秒");
         } else {
-            min = "10";
-            System.out.println("设置指定归并时间使用 --min ,没有指定使用默认的:" + min +"秒");
+            second = "10";
+            System.out.println("设置指定归并时间使用 --second ,没有指定使用默认的:" + second +"秒");
         }
-        long wmin = Long.parseLong(min);
+        long wmin = Long.parseLong(second);
 
         //TODO 0.env
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -67,11 +67,18 @@ public class Tockjson5 {
             @Override
             public void flatMap(String value, Collector<JSONObject> out) throws Exception {
                     JSONObject jsonObject = JSONObject.parseObject(value);
-                    //jsonObject.put("uuid", UUID.randomUUID());
-                    jsonObject.put("uuid", IdUtil.simpleUUID());
-                    long date = new Date().getTime();
-                    jsonObject.put("date",date);
-                    out.collect(jsonObject);
+                //获取所有告警的JSON
+                    JSONArray basicMessageBasicList = jsonObject.getJSONArray("basicMessageBasicList");
+                    Map map = new HashMap();
+                //遍历告警JSON
+                    for (int i = 0; i < basicMessageBasicList.size(); i++) {
+                        map = basicMessageBasicList.getJSONObject(i);
+                        jsonObject.putAll(map);
+                        jsonObject.put("uuid", IdUtil.simpleUUID());
+                        long date = new Date().getTime();
+                        jsonObject.put("date",date);
+                        out.collect(jsonObject);
+                    }
             }
         });
         //2,将数据拆分成两个流,1:伪装和标签,2:变形
@@ -149,13 +156,15 @@ public class Tockjson5 {
                         else map.put("verifyTypeId", "模拟");
                         context.output(camouflageandlabel, jsonObject);
                     }
-                    else map.put("verifyFunctionModuleCode", "标签");
-                    if (map.get("verifyTypeId").equals(1))
-                        map.put("verifyTypeId", "安全标签告警");
-                    else if (map.get("verifyTypeId").equals(2))
-                        map.put("verifyTypeId", "标签错误告警");
-                    else map.put("verifyTypeId", "模拟");
-                    context.output(camouflageandlabel, jsonObject);
+                    else {
+                        map.put("verifyFunctionModuleCode", "标签");
+                        if (map.get("verifyTypeId").equals(1))
+                            map.put("verifyTypeId", "安全标签告警");
+                        else if (map.get("verifyTypeId").equals(2))
+                            map.put("verifyTypeId", "标签错误告警");
+                        else map.put("verifyTypeId", "模拟");
+                        context.output(camouflageandlabel, jsonObject);
+                    }
 
                 }
             }
@@ -218,7 +227,7 @@ public class Tockjson5 {
         //reduce.print();
         //reduce.addSink(new ckSinkA1());
 
-        env.execute();
+        env.execute("数据归并");
     }
 
     private static class ckSinkA extends RichSinkFunction<JSONObject> {

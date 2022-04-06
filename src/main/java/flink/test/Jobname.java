@@ -6,19 +6,25 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.flink.runtime.rest.messages.RequestBody;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.*;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import sun.misc.Request;
 
 
-
+import javax.xml.ws.Response;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Jobname {
         static String jarId = "c00a8e45-7180-4eed-af14-f30f2102fb86_tock1.12.4-1.0-SNAPSHOT.jar";
@@ -26,22 +32,22 @@ public class Jobname {
         static String urlPrefix = "http://10.10.41.251:8081";
 
         public static void main(String[] args) throws IOException, InterruptedException {
-            String jobID = getJobID(urlPrefix, jobName);
-            System.out.println(jobID);
-            String jobState = getJobState(urlPrefix, jobID);
-            System.out.println(jobState);
-            if ("RUNNING".equals(jobState)) {
-                Thread.sleep(3000);
-                int stop = stop(urlPrefix, jobID);
-                if (stop == 202){
-                    System.out.println("关闭程序,并执行重启");
-                }else{
-                    System.out.println("未能关闭进程");
-                    return;
-                }
-            }
+//            String jobID = getJobID(urlPrefix, jobName);
+//            System.out.println(jobID);
+//            String jobState = getJobState(urlPrefix, jobID);
+//            System.out.println(jobState);
+//            if ("RUNNING".equals(jobState)) {
+//                Thread.sleep(3000);
+//                int stop = stop(urlPrefix, jobID);
+//                if (stop == 202){
+//                    System.out.println("关闭程序,并执行重启");
+//                }else{
+//                    System.out.println("未能关闭进程");
+//                    return;
+//                }
+//            }
             //执行新的进程
-            start(urlPrefix, jarId);
+            start();
             //System.out.println(start);
 //            try {
 //                    getJobState(urlPrefix, jobID);
@@ -54,25 +60,50 @@ public class Jobname {
 
         }
 
-    private static String start(String urlPrefix, String jarId) {
-        String baseUrl = "http://host:port/jars/${jarId}/run";
-        Map<String, String> params = new HashMap<>();
-        params.put("programArgs", "xxxxxx");
-        params.put("entryClass", "com.xx.oo.JsonMain");
-        params.put("parallelism", "2");
-        params.put("savepointPath", null);
-        Request request = new Request.Builder()
-                .url(baseUrl)
-                //.addHeader(userAgent, userAgentVal)
-                .post(RequestBody.create(JSON.toJSONString(params), MEDIA_TYPE_JSON))
-                .build();
-        Response resp = OkHttpUtils.execute(request);
-        String respBody = resp.body().string();
-        if (OK == resp.code()) {
-            JSONObject body = JSON.parseObject(respBody);
-            return body.getString("jobid");
-        }
-        return null;
+    private static void start() throws IOException {
+
+            //http://10.10.41.251:8081/v1/jars/c00a8e45-7180-4eed-af14-f30f2102fb86_tock1.12.4-1.0-SNAPSHOT.jar/run?entry-class=flink.Tockjson5&program-args=--min 15
+
+        //String flinkWebUrl = FlinkWebUrlUtil.getRealFlinkUrl(applicationName);
+        String flinkWebUrl = "http://10.10.41.251:8081/v1/jars/c00a8e45-7180-4eed-af14-f30f2102fb86_tock1.12.4-1.0-SNAPSHOT.jar/run";
+        System.out.println(flinkWebUrl);
+        HttpClient httpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(flinkWebUrl);
+        //System.out.println(flinkWebUrl + "/jars/" + jarId + "/run");
+        JSONObject jsonObj = new JSONObject();
+        jsonObj.put("entryClass","flink.Tockjson5");
+        jsonObj.put("programArgs","--second 15");
+        StringEntity entity = new StringEntity(jsonObj.toString(), ContentType.APPLICATION_JSON);
+        httpPost.setEntity(entity);
+        HttpResponse httpResponse = httpClient.execute(httpPost);
+        System.out.println(httpResponse.getStatusLine().getStatusCode());
+        HttpEntity response = httpResponse.getEntity();
+        System.out.println(response);
+        String result = new BufferedReader(new InputStreamReader(response.getContent()))
+                .lines().collect(Collectors.joining("\n"));
+        System.out.println(result);
+
+
+
+
+//        String baseUrl = "http://host:port/jars/${jarId}/run";
+//        Map<String, String> params = new HashMap<>();
+//        params.put("programArgs", "xxxxxx");
+//        params.put("entryClass", "com.xx.oo.JsonMain");
+//        params.put("parallelism", "2");
+//        params.put("savepointPath", null);
+//        Request request = new Request
+//                .url(baseUrl)
+//                //.addHeader(userAgent, userAgentVal)
+//                .post(RequestBody.create(JSON.toJSONString(params), MEDIA_TYPE_JSON))
+//                .build();
+//        Response resp = OkHttpUtils.execute(request);
+//        String respBody = resp.body().string();
+//        if (OK == resp.code()) {
+//            JSONObject body = JSON.parseObject(respBody);
+//            return body.getString("jobid");
+//        }
+//        return null;
     }
 
     /*若任务的状态为running，则调用api结束任务*/
