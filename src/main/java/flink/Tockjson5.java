@@ -67,18 +67,27 @@ public class Tockjson5 {
             @Override
             public void flatMap(String value, Collector<JSONObject> out) throws Exception {
                     JSONObject jsonObject = JSONObject.parseObject(value);
+                    JSONArray basicMessageBasicList = new JSONArray();
                 //获取所有告警的JSON
-                    JSONArray basicMessageBasicList = jsonObject.getJSONArray("basicMessageBasicList");
+                    JSONArray basicMessageBasicListorg = jsonObject.getJSONArray("basicMessageBasicList");
                     Map map = new HashMap();
                 //遍历告警JSON
-                    for (int i = 0; i < basicMessageBasicList.size(); i++) {
-                        map = basicMessageBasicList.getJSONObject(i);
-                        jsonObject.putAll(map);
+                    for (int i = 0; i < basicMessageBasicListorg.size(); i++) {
+                        map = basicMessageBasicListorg.getJSONObject(i);
+                        basicMessageBasicList.add(map);
+                        jsonObject.put("basicMessageBasicList",basicMessageBasicList);
                         jsonObject.put("uuid", IdUtil.simpleUUID());
                         long date = new Date().getTime();
                         jsonObject.put("date",date);
                         out.collect(jsonObject);
+                        basicMessageBasicList.clear();
                     }
+
+//                    jsonObject.put("basicMessageBasicList",basicMessageBasicList.getJSONObject(i));
+//                jsonObject.put("uuid", IdUtil.simpleUUID());
+//                long date = new Date().getTime();
+//                jsonObject.put("date",date);
+//                out.collect(jsonObject);
             }
         });
         //2,将数据拆分成两个流,1:伪装和标签,2:变形
