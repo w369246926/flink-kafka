@@ -32,20 +32,20 @@ public class Jobname {
         static String urlPrefix = "http://10.10.41.251:8081";
 
         public static void main(String[] args) throws IOException, InterruptedException {
-//            String jobID = getJobID(urlPrefix, jobName);
-//            System.out.println(jobID);
-//            String jobState = getJobState(urlPrefix, jobID);
-//            System.out.println(jobState);
-//            if ("RUNNING".equals(jobState)) {
-//                Thread.sleep(3000);
-//                int stop = stop(urlPrefix, jobID);
-//                if (stop == 202){
-//                    System.out.println("关闭程序,并执行重启");
-//                }else{
-//                    System.out.println("未能关闭进程");
-//                    return;
-//                }
-//            }
+            String jobID = getJobID(urlPrefix, jobName);
+            System.out.println(jobID);
+            String jobState = getJobState(urlPrefix, jobID);
+            System.out.println(jobState);
+            if ("RUNNING".equals(jobState)) {
+                Thread.sleep(3000);
+                int stop = stop(urlPrefix, jobID);
+                if (stop == 202){
+                    System.out.println("关闭程序,并执行重启");
+                }else{
+                    System.out.println("未能关闭进程");
+                    return;
+                }
+            }
             //执行新的进程
             start();
             //System.out.println(start);
@@ -65,7 +65,7 @@ public class Jobname {
             //http://10.10.41.251:8081/v1/jars/c00a8e45-7180-4eed-af14-f30f2102fb86_tock1.12.4-1.0-SNAPSHOT.jar/run?entry-class=flink.Tockjson5&program-args=--min 15
 
         //String flinkWebUrl = FlinkWebUrlUtil.getRealFlinkUrl(applicationName);
-        String flinkWebUrl = "http://10.10.41.251:8081/v1/jars/c00a8e45-7180-4eed-af14-f30f2102fb86_tock1.12.4-1.0-SNAPSHOT.jar/run";
+        String flinkWebUrl = "http://10.10.41.251:8081/v1/jars/b80f0972-43ff-4eae-9e77-f4534d5c8ed2_tock1.12.4-1.0-SNAPSHOT.jar/run";
         System.out.println(flinkWebUrl);
         HttpClient httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(flinkWebUrl);
@@ -82,28 +82,6 @@ public class Jobname {
         String result = new BufferedReader(new InputStreamReader(response.getContent()))
                 .lines().collect(Collectors.joining("\n"));
         System.out.println(result);
-
-
-
-
-//        String baseUrl = "http://host:port/jars/${jarId}/run";
-//        Map<String, String> params = new HashMap<>();
-//        params.put("programArgs", "xxxxxx");
-//        params.put("entryClass", "com.xx.oo.JsonMain");
-//        params.put("parallelism", "2");
-//        params.put("savepointPath", null);
-//        Request request = new Request
-//                .url(baseUrl)
-//                //.addHeader(userAgent, userAgentVal)
-//                .post(RequestBody.create(JSON.toJSONString(params), MEDIA_TYPE_JSON))
-//                .build();
-//        Response resp = OkHttpUtils.execute(request);
-//        String respBody = resp.body().string();
-//        if (OK == resp.code()) {
-//            JSONObject body = JSON.parseObject(respBody);
-//            return body.getString("jobid");
-//        }
-//        return null;
     }
 
     /*若任务的状态为running，则调用api结束任务*/

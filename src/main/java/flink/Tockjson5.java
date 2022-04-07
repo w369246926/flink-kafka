@@ -70,6 +70,7 @@ public class Tockjson5 {
                     JSONArray basicMessageBasicList = new JSONArray();
                 //获取所有告警的JSON
                     JSONArray basicMessageBasicListorg = jsonObject.getJSONArray("basicMessageBasicList");
+                System.out.println(wmin);
                     Map map = new HashMap();
                 //遍历告警JSON
                     for (int i = 0; i < basicMessageBasicListorg.size(); i++) {
@@ -81,13 +82,9 @@ public class Tockjson5 {
                         jsonObject.put("date",date);
                         out.collect(jsonObject);
                         basicMessageBasicList.clear();
+
                     }
 
-//                    jsonObject.put("basicMessageBasicList",basicMessageBasicList.getJSONObject(i));
-//                jsonObject.put("uuid", IdUtil.simpleUUID());
-//                long date = new Date().getTime();
-//                jsonObject.put("date",date);
-//                out.collect(jsonObject);
             }
         });
         //2,将数据拆分成两个流,1:伪装和标签,2:变形
@@ -305,7 +302,7 @@ public class Tockjson5 {
                     String sqlkey = columns.toString();
                     String sqlvalue = values.toString();
                     sql = "INSERT INTO default.report ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                    System.out.println("A表");
+                    //System.out.println("A表");
                     stmt.executeQuery(sql);
                 }
             }catch (Exception e){
@@ -388,7 +385,7 @@ public class Tockjson5 {
                 String sqlkey = columns.toString();
                 String sqlvalue = values.toString();
                 sql = "INSERT INTO default.report_deformation ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                System.out.println("B表");
+                //System.out.println("B表");
                 stmt.executeQuery(sql);
             }
         }catch (Exception e){
@@ -470,7 +467,7 @@ public class Tockjson5 {
                     String sqlkey = columns.toString();
                     String sqlvalue = values.toString();
                     sql = "INSERT INTO default.report ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                    System.out.println("A1表"+sql);
+                    //System.out.println("A1表"+sql);
                     stmt.executeQuery(sql);
                 }
             }catch (Exception e){
