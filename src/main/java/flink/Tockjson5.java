@@ -102,7 +102,7 @@ public class Tockjson5 {
                     Object verifyFunctionModuleCode = map.get("verifyFunctionModuleCode");
                     //System.out.println(verifyFunctionModuleCode);
                     if (map.get("verifyFunctionModuleCode").equals(6)) {
-                        map.put("verifyFunctionModuleCode", "变形");
+                        map.put("verifyFunctionModuleCode", "网络变形");
                         if (map.get("verifyTypeId").equals(1))
                             map.put("verifyTypeId", "标签目的地址未在白名单告警");
                         else if (map.get("verifyTypeId").equals(2))
@@ -119,7 +119,7 @@ public class Tockjson5 {
                         context.output(transformation, jsonObject);
                     }
                     else if (map.get("verifyFunctionModuleCode").equals(4)) {
-                        map.put("verifyFunctionModuleCode", "隐身");
+                        map.put("verifyFunctionModuleCode", "网络隐身");
                         if (map.get("verifyTypeId").equals(1))
                             map.put("verifyTypeId", "隐身ARP告警");
                         else if (map.get("verifyTypeId").equals(0))
@@ -128,7 +128,7 @@ public class Tockjson5 {
                         context.output(camouflageandlabel, jsonObject);
                     }
                     else if (map.get("verifyFunctionModuleCode").equals(5)) {
-                        map.put("verifyFunctionModuleCode", "伪装");
+                        map.put("verifyFunctionModuleCode", "网络伪装");
                         if (map.get("verifyTypeId").equals(1))
                             map.put("verifyTypeId", "攻击会话开始告警");
                         else if (map.get("verifyTypeId").equals(2))
@@ -163,7 +163,7 @@ public class Tockjson5 {
                         context.output(camouflageandlabel, jsonObject);
                     }
                     else {
-                        map.put("verifyFunctionModuleCode", "标签");
+                        map.put("verifyFunctionModuleCode", "安全标签");
                         if (map.get("verifyTypeId").equals(1))
                             map.put("verifyTypeId", "安全标签告警");
                         else if (map.get("verifyTypeId").equals(2))
@@ -301,8 +301,8 @@ public class Tockjson5 {
                     values.append (value.getOrDefault("messageSplit","-1")).append("'");
                     String sqlkey = columns.toString();
                     String sqlvalue = values.toString();
-                    sql = "INSERT INTO default.report ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                    //System.out.println("A表");
+                    sql = "INSERT INTO default.bus_warning_local ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
+                    System.out.println("A表");
                     stmt.executeQuery(sql);
                 }
             }catch (Exception e){
@@ -384,8 +384,8 @@ public class Tockjson5 {
                 values.append (value.getOrDefault("messageSplit","-1")).append("'");
                 String sqlkey = columns.toString();
                 String sqlvalue = values.toString();
-                sql = "INSERT INTO default.report_deformation ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                //System.out.println("B表");
+                sql = "INSERT INTO default.bus_twarning_local ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
+                System.out.println("B表");
                 stmt.executeQuery(sql);
             }
         }catch (Exception e){
@@ -466,8 +466,8 @@ public class Tockjson5 {
                     values.append (value.getOrDefault("messageSplit","-1")).append("'");
                     String sqlkey = columns.toString();
                     String sqlvalue = values.toString();
-                    sql = "INSERT INTO default.report ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                    //System.out.println("A1表"+sql);
+                    sql = "INSERT INTO default.bus_warning_local ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
+                    System.out.println("A1表"+sql);
                     stmt.executeQuery(sql);
                 }
             }catch (Exception e){
