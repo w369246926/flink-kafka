@@ -33,7 +33,7 @@ import java.util.*;
 public class Tockjson5 {
     public static void main(String[] args) throws Exception {
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
-        String second = "10";
+        String second = "15";
         if (parameterTool.has("second")) {
             second = parameterTool.get("second");
             System.out.println("指定了归并时间:" + second +"秒");
@@ -261,10 +261,11 @@ public class Tockjson5 {
         }
         @Override
         public void invoke(JSONObject value, Context context) throws Exception {
+            value.put("size","1");
             String sql= "";
             StringBuilder columns = new StringBuilder("uuid,date,messageProtocolVersion,messageDeviceTypeId,messageProductId,messageDeviceDescribe,messageEmbeddedSoftwareVersion," +
                     "messageChipVersion,messageDeviceSerialId,messagePackageId,messageLoadLength,messageNumber,messageSplitSerialId," +
-                    "verifyCode,reserved,");
+                    "verifyCode,reserved,size,");
             StringBuilder values = new StringBuilder();
             values.append("'");
             values.append (value.getOrDefault("uuid","-1")).append("','");
@@ -282,6 +283,7 @@ public class Tockjson5 {
             values.append (value.getOrDefault("messageSplitSerialId","-1")).append("','");
             values.append (value.getOrDefault("verifyCode","-1")).append("','");
             values.append (value.getOrDefault("reserved","-1")).append("','");
+            values.append (value.getOrDefault("size","1")).append("','");
             try {
                 //获取所有告警的JSON
                 JSONArray basicMessageBasicList = value.getJSONArray("basicMessageBasicList");
