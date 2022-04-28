@@ -58,7 +58,7 @@ public class Tockjson5 {
         //使用连接参数创建FlinkKafkaConsumer/kafkaSource
         FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("da_trace", new SimpleStringSchema(), props);
         //使用kafkaSource
-        DataStream<String> kafkaDS = env.addSource(kafkaSource);
+        DataStream<String> kafkaDS = env.addSource(kafkaSource).setParallelism(3);
         //TODO 2.transformation
 
         //1,将kafka,String数据变更成jsonobj并打上时间戳time和UUID
@@ -70,7 +70,7 @@ public class Tockjson5 {
                     JSONArray basicMessageBasicList = new JSONArray();
                 //获取所有告警的JSON
                     JSONArray basicMessageBasicListorg = jsonObject.getJSONArray("basicMessageBasicList");
-                System.out.println(wmin);
+                System.out.println("指定归并的时间"+wmin);
                     Map map = new HashMap();
                 //遍历告警JSON
                     for (int i = 0; i < basicMessageBasicListorg.size(); i++) {
@@ -304,7 +304,7 @@ public class Tockjson5 {
                     String sqlkey = columns.toString();
                     String sqlvalue = values.toString();
                     sql = "INSERT INTO default.bus_warning_local ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                    System.out.println("A表");
+                    //System.out.println("A表");
                     stmt.executeQuery(sql);
                 }
             }catch (Exception e){
@@ -340,7 +340,7 @@ public class Tockjson5 {
     @Override
     public void invoke(JSONObject value, Context context) throws Exception {
         Object size = value.get("size");
-        System.out.println(size);
+        //System.out.println(size);
         if (size != null){
             return;
         }
@@ -387,7 +387,7 @@ public class Tockjson5 {
                 String sqlkey = columns.toString();
                 String sqlvalue = values.toString();
                 sql = "INSERT INTO default.bus_twarning_local ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                System.out.println("B表");
+                //System.out.println("B表");
                 stmt.executeQuery(sql);
             }
         }catch (Exception e){
@@ -422,7 +422,7 @@ public class Tockjson5 {
         @Override
         public void invoke(JSONObject value, Context context) throws Exception {
             Object size = value.get("size");
-            System.out.println("size");
+            //System.out.println("size");
             if (size == null){
                 return;
             }
@@ -469,7 +469,7 @@ public class Tockjson5 {
                     String sqlkey = columns.toString();
                     String sqlvalue = values.toString();
                     sql = "INSERT INTO default.bus_warning_local ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
-                    System.out.println("A1表"+sql);
+                    //System.out.println("A1表"+sql);
                     stmt.executeQuery(sql);
                 }
             }catch (Exception e){

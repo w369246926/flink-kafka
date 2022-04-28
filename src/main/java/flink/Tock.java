@@ -1,5 +1,7 @@
 package flink;
 
+import io.minio.*;
+import io.minio.errors.MinioException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,9 +10,12 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.flink.streaming.api.functions.sink.SinkFunction;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import ru.yandex.clickhouse.BalancedClickhouseDataSource;
 
+import java.io.File;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.Properties;
@@ -29,14 +34,18 @@ public class Tock {
         //props.setProperty("bootstrap.servers", "39.96.136.7:9092");//集群地址
         //props.setProperty("bootstrap.servers", "39.96.139.70:9092");//集群地址
 
-        props.setProperty("bootstrap.servers", "10.10.41.242:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.41.243:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.41.251:9092");//集群地址
+//        props.setProperty("bootstrap.servers", "10.10.41.242:9092");//集群地址
+//        props.setProperty("bootstrap.servers", "10.10.41.243:9092");//集群地址
+//        props.setProperty("bootstrap.servers", "10.10.41.251:9092");//集群地址
+
+        props.setProperty("bootstrap.servers", "192.168.110.245:9092");//集群地址
+        props.setProperty("bootstrap.servers", "192.168.110.40:9092");//集群地址
+        props.setProperty("bootstrap.servers", "192.168.110.214:9092");//集群地址
 
         props.setProperty("group.id", "flink");//消费者组id
         props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
         //使用连接参数创建FlinkKafkaConsumer/kafkaSource
-        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("da_trace", new SimpleStringSchema(), props);
+        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("pcap", new SimpleStringSchema(), props);
         //使用kafkaSource
         DataStream<String> kafkaDS = env.addSource(kafkaSource);
 
@@ -86,7 +95,9 @@ public class Tock {
         });*/
 
         kafkaDS.print();
-        kafkaDS.addSink(new ckSink());
+        //kafkaDS.writeAsText("s3://10.10.41.251:9090/flinkstreamfilesink/data");
+        //kafkaDS.addSink(new ckSink());
+        //kafkaDS.addSink(new minioSink());
         env.execute();
 
     }
@@ -172,4 +183,39 @@ public class Tock {
             private String data;
         }
     }
+
+    private static class minioSink implements SinkFunction {
+        @Override
+        public void invoke(Object value, Context context) throws Exception {
+
+            //InputStream in = value.getInputStream();
+            try {
+// Create a minioClient with the MinIO server playground, its access keyand secret key.
+                MinioClient minioClient =
+                        MinioClient.builder()
+                                .endpoint("http://10.10.41.251:9090")
+                                .credentials("adminminio", "admin123456")
+                                .build();
+// 创建bucket
+                String bucketName = "flinkstreamfilesink";
+                boolean exists =
+                        minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+                if (!exists) {
+// 不存在，创建bucket
+                    minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
+                }
+// 上传文件
+                long l = System.currentTimeMillis();
+                String name = String.valueOf(l);
+//                minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(name)
+//                        .stream(stream, -1, 10485760).build());
+                System.out.println("上传文件成功");
+            } catch (MinioException e) {
+                System.out.println("Error occurred: " + e);
+                System.out.println("HTTP trace: " + e.httpTrace());
+            }
+
+        }
+    }
+
 }

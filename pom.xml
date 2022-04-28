@@ -45,6 +45,11 @@
             <artifactId>flink-connector-kafka_2.12</artifactId>
             <version>${flink.version}</version>
         </dependency>
+        <!--<dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-kafka-0.11_2.11</artifactId>
+            <version>1.8.0</version>
+        </dependency>-->
         <!-- flink JDBC  clilkhouse -->
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -94,6 +99,58 @@
             <artifactId>hutool-all</artifactId>
             <version>5.3.4</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-shaded-hadoop-2-uber</artifactId>
+            <version>2.7.5-10.0</version>
+        </dependency>
+
+        <!-- 日志 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.7</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>jpcap</groupId>
+            <artifactId>jpcap</artifactId>
+            <version>0.1.18-002</version>
+        </dependency>
+        <!-- <dependency>
+           <groupId>org.apache.flink</groupId>
+           <artifactId>flink-connector-filesystem_2.12</artifactId>
+           <version>${flink.version}</version>
+       </dependency>-->
+        <!--        minio-->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-s3-fs-hadoop</artifactId>
+            <version>1.12.0</version>
+            <type>pom</type>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-s3-fs-presto</artifactId>
+            <version>1.12.0</version>
+            <type>pom</type>
+        </dependency>
+
+
+
 
     </dependencies>
 
