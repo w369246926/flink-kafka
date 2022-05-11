@@ -45,11 +45,11 @@
             <artifactId>flink-connector-kafka_2.12</artifactId>
             <version>${flink.version}</version>
         </dependency>
-        <!--<dependency>
+        <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-kafka-0.11_2.11</artifactId>
             <version>1.8.0</version>
-        </dependency>-->
+        </dependency>
         <!-- flink JDBC  clilkhouse -->
         <dependency>
             <groupId>org.apache.flink</groupId>

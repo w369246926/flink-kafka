@@ -38,7 +38,7 @@ public class Tockjson5 {
             second = parameterTool.get("second");
             System.out.println("指定了归并时间:" + second +"秒");
         } else {
-            second = "10";
+            second = "20";
             System.out.println("设置指定归并时间使用 --second ,没有指定使用默认的:" + second +"秒");
         }
         long wmin = Long.parseLong(second);
@@ -296,6 +296,9 @@ public class Tockjson5 {
                     for (Map.Entry<String, String> stringStringEntry : set) {
                         columns.append(stringStringEntry.getKey().toString()).append(",");
                         String s = String.valueOf(stringStringEntry.getValue());
+                        if (s.equals(null)){
+                            s = "0";
+                        }
                         values.append(s).append("','");
                     }
                     columns.append("tempVerifyCode,messageSplit");
@@ -461,6 +464,9 @@ public class Tockjson5 {
                     for (Map.Entry<String, String> stringStringEntry : set) {
                         columns.append(stringStringEntry.getKey().toString()).append(",");
                         String s = String.valueOf(stringStringEntry.getValue());
+                        if (s.equals(null)){
+                            s = "0";
+                        }
                         values.append(s).append("','");
                     }
                     columns.append("tempVerifyCode,messageSplit");
