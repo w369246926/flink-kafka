@@ -38,14 +38,18 @@ public class Tock {
 //        props.setProperty("bootstrap.servers", "10.10.41.243:9092");//集群地址
 //        props.setProperty("bootstrap.servers", "10.10.41.251:9092");//集群地址
 
-        props.setProperty("bootstrap.servers", "192.168.110.245:9092");//集群地址
-        props.setProperty("bootstrap.servers", "192.168.110.40:9092");//集群地址
-        props.setProperty("bootstrap.servers", "192.168.110.214:9092");//集群地址
+        props.setProperty("bootstrap.servers", "192.168.88.161:9092");//集群地址
+        props.setProperty("bootstrap.servers", "192.168.88.162:9092");//集群地址
+        props.setProperty("bootstrap.servers", "192.168.88.163:9092");//集群地址
+
+//        props.setProperty("bootstrap.servers", "192.168.110.245:9092");//集群地址
+//        props.setProperty("bootstrap.servers", "192.168.110.40:9092");//集群地址
+//        props.setProperty("bootstrap.servers", "192.168.110.214:9092");//集群地址
 
         props.setProperty("group.id", "flink");//消费者组id
         props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
         //使用连接参数创建FlinkKafkaConsumer/kafkaSource
-        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("pcap", new SimpleStringSchema(), props);
+        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("matedata", new SimpleStringSchema(), props);
         //使用kafkaSource
         DataStream<String> kafkaDS = env.addSource(kafkaSource);
 
