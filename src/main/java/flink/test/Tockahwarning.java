@@ -1,11 +1,10 @@
-package flink;
+package flink.test;
 
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.shaded.hadoop2.org.apache.http.client.config.RequestConfig;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
@@ -20,14 +19,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-public class Tockmatedata {
+public class Tockahwarning {
     public static void main(String[] args) throws Exception {
         //TODO 0.env
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         //env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);
-        RequestConfig.custom().setConnectionRequestTimeout(120 * 1000)
-                .setSocketTimeout(120 * 1000).setConnectTimeout(120 * 1000).build();
-
 
         //TODO 1.source
         //准备kafka连接参数
@@ -35,10 +31,10 @@ public class Tockmatedata {
         props.setProperty("bootstrap.servers", "10.10.41.242:9092");//集群地址
         props.setProperty("bootstrap.servers", "10.10.41.243:9092");//集群地址
         props.setProperty("bootstrap.servers", "10.10.41.251:9092");//集群地址
-        props.setProperty("group.id", "flink1347");//消费者组id
+        props.setProperty("group.id", "flink");//消费者组id
         props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
         //使用连接参数创建FlinkKafkaConsumer/kafkaSource
-        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("metadata1", new SimpleStringSchema(), props);
+        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("metadata2", new SimpleStringSchema(), props);
         //使用kafkaSource
         DataStream<String> kafkaDS = env.addSource(kafkaSource);
         //TODO 2.transformation
@@ -53,7 +49,6 @@ public class Tockmatedata {
                     String replace = substring.replace("[", "\"").replace("]","\"");
                     System.out.println("yes[]----" + replace);
                     JSONObject jsonObject = JSONObject.parseObject(replace);
-                    jsonObject.put("uuid", IdUtil.simpleUUID());
                     collector.collect(jsonObject);
                 } else {
                     //无大括号json
@@ -61,7 +56,6 @@ public class Tockmatedata {
                     //将不规则字符更换为规则字符
                     //String replace = s.replace("[", "\"").replace("]","\"");
                     JSONObject jsonObject = JSONObject.parseObject(s);
-                    jsonObject.put("uuid", IdUtil.simpleUUID());
                     collector.collect(jsonObject);
                 }
             }
@@ -71,8 +65,8 @@ public class Tockmatedata {
         //TODO 3.sink
 
 
-        //dataStream.print();
-        dataStream.addSink(new ckSink()).setParallelism(1);
+        dataStream.print();
+        dataStream.addSink(new ckSink());
 
 
         env.execute();
@@ -80,24 +74,11 @@ public class Tockmatedata {
     }
 
     private static class ckSink extends RichSinkFunction<JSONObject> {
-        String key = "uuid,device_id,device_ip,interface_icon,data_type,time,sip,sipv6,smac,sport," +
-                "dip,dipv6,dmac,dport,network_protocol,transport_protocol,session_protocol,app_protocol," +
-                "sess_id,log_type,mail_time,from,to,cc,subject,bcc,returnpath,received,send_server_domain," +
-                "send_server_ip,content_encoding,content_length,mail_size,file_list,client_total_byte," +
-                "client_total_pkt,server_total_byte,server_total_pkt,flow_start_time,flow_end_time," +
-                "flow_duration,total_byte,avg_pkt_byte,total_pkt,avg_pkt_num,avg_pkt_size,close_status," +
-                "avg_delay_time,retrans_pkt_num,version,session_id,server_name,issuer_name,common_name," +
-                "not_before,not_after,public_key,c_cipher_suite,s_cipher_suite,ja3,ja3s,method,uri,origin," +
-                "cookie,agent,referer,http_req_header,http_res_code,content_type,content_length_tow," +
-                "http_res_heade,dns_type,host,mx,cname,res_code_one,count,dns_query_type,aa,tc,rd,ra," +
-                "rep_rr_info,aa_rr_info,append_rr_info,rr_ttl,dns_req_len,dns_res_len,dns_req_rr_type," +
-                "dns_res_rr_type,dns_res_ip,version_two,username,dbname,req_cmd,res_code,file_dir," +
-                "file_name,file_type,file_size,file_md5" ;
         String sql= "";
         private Statement stmt;
         private  Connection conn;
         private PreparedStatement preparedStatement;
-        String jdbcUrl = "jdbc:clickhouse://10.10.41.251:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
+        String jdbcUrl = "jdbc:clickhouse://10.10.41.242:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
         @Override
         public void open(Configuration parameters) throws Exception {
             super.open(parameters);
@@ -118,25 +99,29 @@ public class Tockmatedata {
         @Override
         public void invoke(JSONObject value, Context context) throws Exception {
             try{
-
-                    String[] splitkey = key.split(",");
-                    //获取所有告警的JSON
+                //获取所有告警的JSON
                     StringBuilder columns = new StringBuilder();
                     StringBuilder values = new StringBuilder();
                     values.append("'");
-                for (int i = 0; i < splitkey.length; i++) {
+                    //遍历第 i 个json
+                    Set<Map.Entry<String, Object>> set = value.entrySet();
+                    for (Map.Entry<String, Object> stringStringEntry : set) {
+                        columns.append(stringStringEntry.getKey().toString()).append(",");
+                        String s = String.valueOf(stringStringEntry.getValue());
+                        if (s.equals(null)){
+                            s = "0";
+                        }
+                        String s1 = s.replace("'", "|");
 
-                    if (i == splitkey.length-1){
-                        //System.out.println(splitkey.length);
-                        values.append(value.getOrDefault(splitkey[i], "-1")).append("'");
-                    }else {
-                        values.append(value.getOrDefault(splitkey[i], "-1")).append("','");
+                        values.append(s1).append("','");
                     }
-                }
+                    columns.append("uuid");
+                    values.append (IdUtil.simpleUUID()).append("'");;
+//                    values.append (value.getOrDefault("messageSplit","-1")).append("'");
+                    String sqlkey = columns.toString();
                     String sqlvalue = values.toString();
-                    sql = "INSERT INTO default.bus_ahmetadata_local ( "+ key+" ) VALUES ( "+sqlvalue +" )";
+                    sql = "INSERT INTO default.bus_ahwarning_local ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";
                     //System.out.println("A表");
-                System.out.println(sql);
                     stmt.executeQuery(sql);
 
             }catch (Exception e){
