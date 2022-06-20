@@ -4,11 +4,8 @@ import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -30,7 +27,7 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.*;
 
-public class Tockjson5 {
+public class Tockdawarning {
     public static void main(String[] args) throws Exception {
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
         String second = "15";
@@ -56,7 +53,7 @@ public class Tockjson5 {
         props.setProperty("group.id", "flink");//消费者组id
         props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
         //使用连接参数创建FlinkKafkaConsumer/kafkaSource
-        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("da_trace", new SimpleStringSchema(), props);
+        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("dawarning", new SimpleStringSchema(), props);
         //使用kafkaSource
         DataStream<String> kafkaDS = env.addSource(kafkaSource).setParallelism(3);
         //TODO 2.transformation
