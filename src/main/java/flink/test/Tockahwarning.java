@@ -65,11 +65,11 @@ public class Tockahwarning {
         //TODO 3.sink
 
 
-        dataStream.print();
+        //dataStream.print();
         dataStream.addSink(new ckSink());
 
 
-        env.execute();
+        env.execute("安恒告警日志数据");
 
     }
 
@@ -78,7 +78,7 @@ public class Tockahwarning {
         private Statement stmt;
         private  Connection conn;
         private PreparedStatement preparedStatement;
-        String jdbcUrl = "jdbc:clickhouse://10.10.41.242:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
+        String jdbcUrl = "jdbc:clickhouse://10.10.41.251:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
         @Override
         public void open(Configuration parameters) throws Exception {
             super.open(parameters);

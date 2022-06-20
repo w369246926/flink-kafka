@@ -1,4 +1,4 @@
-package flink;
+package flink.test;
 
 import io.minio.*;
 import io.minio.errors.MinioException;
