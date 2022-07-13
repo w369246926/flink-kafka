@@ -9,18 +9,22 @@ import net.sourceforge.jpcap.net.TCPPacket;
 import net.sourceforge.jpcap.net.UDPPacket;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.state.MapState;
+import org.apache.flink.api.common.state.MapStateDescriptor;
+import org.apache.flink.api.common.state.StateTtlConfig;
+import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer010;
 import org.apache.flink.util.Collector;
 
-import org.apache.flink.api.common.serialization.DeserializationSchema;
-import org.apache.flink.api.common.typeinfo.TypeHint;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
+
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -32,33 +36,18 @@ public class Pcapmimio {
     //private  static Logger logger = LoggerFactory.getLogger(Pcapmimio2.class);
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        /*env.enableCheckpointing(1000L);
-        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
-        env.setParallelism(3);*/
-        Map properties = new HashMap();
-//        properties.put("zookeeper.connect", "192.168.110.245:2181,192.168.110.40:2181,192.168.110.214:2181");
-//        properties.put("bootstrap.servers", "192.168.110.245:6667,192.168.110.40:6667,192.168.110.214:6667");
-        //properties.put("zookeeper.connect", "10.10.41.251:2181,10.10.41.242:2181,10.10.41.243:2181");
-        properties.put("bootstrap.servers", "10.10.41.251:9092,10.10.41.242:9092,10.10.41.243:9092");
-        properties.put("group.id", "consumerpcap22 ");
-//        properties.put("enable.auto.commit", "true");
-//        properties.put("auto.commit.interval.ms", "1000");
-//        properties.put("max.poll.records", "1000");
-//        properties.put("auto.offset.reset", "latest");//latest  earliest
-//        properties.put("session.timeout.ms", "30000");
-//        properties.put("heartbeat.interval.ms", "10000");
-//        properties.put("max.partition.fetch.bytes", "104857600");
-//        properties.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-//        properties.put("value.deserializer", "org.apache.kafka.common.serialization.ByteArrayDeserializer");
-//        properties.put("fetch.max.wait.ms", "500");
-//        properties.put("fetch.min.bytes", "3655360");
-//        properties.put("topic", "packdata");
 
+        Map properties = new HashMap();
+
+        properties.put("zookeeper.connect", "10.10.41.251:2181,10.10.41.242:2181,10.10.41.243:2181");
+        properties.put("bootstrap.servers", "10.10.41.251:9092,10.10.41.242:9092,10.10.41.243:9092");
+        properties.put("group.id", "consumer ");
+        properties.put("auto.offset.reset", "latest");//latest  earliest
         ParameterTool parameterTool = ParameterTool.fromMap(properties);
-        FlinkKafkaConsumer010<byte[]> transction = new FlinkKafkaConsumer010("packdata",new ByteDeSerializer(), parameterTool.getProperties());
-//        transction.setStartFromEarliest();
-//        transction.setStartFromGroupOffsets();
-        DataStream<byte[]> transction1 = env.addSource(transction).name("Kafka数据源");
+        FlinkKafkaConsumer<byte[]> transction = new FlinkKafkaConsumer("packdata",new ByteDeSerializer(), parameterTool.getProperties());
+        transction.setStartFromEarliest();
+        transction.setStartFromGroupOffsets();
+        DataStream<byte[]> transction1 = env.addSource(transction).name("Kafka数据源").setParallelism(1);;
         DataStream<Pcap2> dataStream = transction1.keyBy(new KeySelector<byte[], String>() {
             @Override
             public String getKey(byte[] value) throws Exception {
@@ -237,11 +226,12 @@ public class Pcapmimio {
                         }
                         return sBuilder.toString();
                     }
-                });
-                //.setParallelism(1);
+                }).setParallelism(1);;
+                //.setParallelism(1);transction1
         System.out.println("sink");
-
-        dataStream.addSink(new miniosink());
+        transction1.print();
+        dataStream.print();
+        //dataStream.addSink(new miniosink());
         env.execute();
     }
 
@@ -480,24 +470,4 @@ public class Pcapmimio {
             PacketData = packetData;
         }
     }
-
-    public static class ByteDeSerializer implements DeserializationSchema<byte[]> {
-
-        @Override
-        public byte[] deserialize(byte[] message) {
-            return message;
-        }
-
-        @Override
-        public boolean isEndOfStream(byte[] nextElement) {
-            return false;
-        }
-
-        @Override
-        public TypeInformation<byte[]> getProducedType() {
-            return TypeInformation.of(new TypeHint<byte[]>(){});
-        }
-    }
-
-
 }

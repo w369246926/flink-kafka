@@ -46,23 +46,27 @@ public class Tockmatedata {
             @Override
             public void flatMap(String s, Collector<JSONObject> collector) throws Exception {
                 //有大括号[json]
-                if (s.substring(0, 1).equals("[")) {
-                    //截取需求部分
-                    String substring = s.substring(1, (s.length()-2));
-                    //将不规则字符更换为规则字符
-                    String replace = substring.replace("[", "\"").replace("]","\"");
-                    System.out.println("yes[]----" + replace);
-                    JSONObject jsonObject = JSONObject.parseObject(replace);
-                    jsonObject.put("uuid", IdUtil.simpleUUID());
-                    collector.collect(jsonObject);
-                } else {
-                    //无大括号json
-                    //System.out.println("no[]----" + s);
-                    //将不规则字符更换为规则字符
-                    //String replace = s.replace("[", "\"").replace("]","\"");
-                    JSONObject jsonObject = JSONObject.parseObject(s);
-                    jsonObject.put("uuid", IdUtil.simpleUUID());
-                    collector.collect(jsonObject);
+                try {
+                    if (s.substring(0, 1).equals("[")) {
+                        //截取需求部分
+                        String substring = s.substring(1, (s.length() - 2));
+                        //将不规则字符更换为规则字符
+                        String replace = substring.replace("[", "\"").replace("]", "\"");
+                        System.out.println("yes[]----" + replace);
+                        JSONObject jsonObject = JSONObject.parseObject(replace);
+                        jsonObject.put("uuid", IdUtil.simpleUUID());
+                        collector.collect(jsonObject);
+                    } else {
+                        //无大括号json
+                        //System.out.println("no[]----" + s);
+                        //将不规则字符更换为规则字符
+                        String replace = s.replace("\\\\", "");
+                        JSONObject jsonObject = JSONObject.parseObject(replace);
+                        jsonObject.put("uuid", IdUtil.simpleUUID());
+                        collector.collect(jsonObject);
+                    }
+                }catch (Exception e){
+                    System.out.println(e);
                 }
             }
         });
@@ -111,8 +115,8 @@ public class Tockmatedata {
         @Override
         public void close() throws Exception {
             super.close();
-            if (preparedStatement != null) {
-                preparedStatement.close();
+            if (conn != null) {
+                conn.close();
             }
         }
         @Override

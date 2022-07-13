@@ -1,4 +1,4 @@
-package flink;
+package flink.test;
 
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -21,13 +21,14 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 import ru.yandex.clickhouse.BalancedClickhouseDataSource;
+import ru.yandex.clickhouse.ClickHouseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.*;
 
-public class Tockdawarning {
+public class Tockdawarningtest1 {
     public static void main(String[] args) throws Exception {
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
         String second = "15";
@@ -225,36 +226,49 @@ public class Tockdawarning {
         apply.addSink(new ckSinkB());
         apply.addSink(new ckSinkA1());
 
-
-
-        //reduce.print();
-        //reduce.addSink(new ckSinkA1());
-
         env.execute("数据归并");
     }
 
     private static class ckSinkA extends RichSinkFunction<JSONObject> {
+
+        private BalancedClickhouseDataSource balancedClickhouseDataSource;
+        private List<JSONObject> wifis = new ArrayList<JSONObject>();
+        private long begin = 0l;
+        private Connection conn = null;
+
+        private PreparedStatement pstmt = null;
+        private int day;
+
         String sql= "";
         private Statement stmt;
-        private  Connection conn;
-        //private PreparedStatement preparedStatement;
-        String jdbcUrl = "jdbc:clickhouse://10.10.41.251:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
+        //private  Connection conn;
+        private PreparedStatement preparedStatement;
+
         @Override
         public void open(Configuration parameters) throws Exception {
             super.open(parameters);
+            String jdbcUrl = "jdbc:clickhouse://10.10.41.251:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
             //加载JDBC驱动
             Class.forName("ru.yandex.clickhouse.ClickHouseDriver");
             //获取数据库连接
-            conn = new BalancedClickhouseDataSource(jdbcUrl).getConnection("default", "123456");
-            stmt = conn.createStatement();
-            //preparedStatement = conn.prepareStatement(sql);
+            Properties properties = new Properties();
+            properties.setProperty("user","default");
+            properties.setProperty("password","123456");
+            balancedClickhouseDataSource = new BalancedClickhouseDataSource(jdbcUrl,properties);            stmt = conn.createStatement();
+            conn = balancedClickhouseDataSource.getConnection();
+            String sql = clickhouseInsertValue(
+                    new String[]{"uuid,date,messageProtocolVersion,messageDeviceTypeId,messageProductId,messageDeviceDescribe,messageEmbeddedSoftwareVersion," +
+                            "messageChipVersion,messageDeviceSerialId,messagePackageId,messageLoadLength,messageNumber,messageSplitSerialId," +
+                            "verifyCode,reserved,size,"},
+                    "wifiprobe_local",
+                    "default"
+            );
+            pstmt = conn.prepareStatement(sql);
         }
         @Override
         public void close() throws Exception {
             super.close();
-            if (conn != null) {
-                conn.close();
-            }
+            conn.close();
         }
         @Override
         public void invoke(JSONObject value, Context context) throws Exception {
@@ -333,8 +347,8 @@ public class Tockdawarning {
     @Override
     public void close() throws Exception {
         super.close();
-        if (conn != null) {
-            conn.close();
+        if (preparedStatement != null) {
+            preparedStatement.close();
         }
     }
     @Override
@@ -415,8 +429,8 @@ public class Tockdawarning {
         @Override
         public void close() throws Exception {
             super.close();
-            if (conn != null) {
-                conn.close();
+            if (preparedStatement != null) {
+                preparedStatement.close();
             }
         }
         @Override
@@ -479,5 +493,19 @@ public class Tockdawarning {
                 System.out.println(e);
             }
         }
+    }
+
+    public static String clickhouseInsertValue(String[] tableColums, String tablename,String dataBaseName){
+        StringBuffer sbCloums = new StringBuffer();
+        StringBuffer sbValues = new StringBuffer();
+        for (String s:tableColums) {
+            sbCloums.append(s).append(",");
+            sbValues.append("?").append(",");
+        }
+        String colums=sbCloums.toString().substring(0,sbCloums.toString().length()-1);
+        String values=sbValues.toString().substring(0,sbValues.toString().length()-1);
+
+        String insertSQL="insert into "+dataBaseName+"."+tablename+" ( "+colums+" ) values ( "+values+")";
+        return insertSQL;
     }
 }

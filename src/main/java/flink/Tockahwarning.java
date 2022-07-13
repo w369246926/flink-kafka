@@ -92,8 +92,8 @@ public class Tockahwarning {
         @Override
         public void close() throws Exception {
             super.close();
-            if (preparedStatement != null) {
-                preparedStatement.close();
+            if (conn != null) {
+                conn.close();
             }
         }
         @Override
