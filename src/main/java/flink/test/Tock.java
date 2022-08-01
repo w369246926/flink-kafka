@@ -34,9 +34,9 @@ public class Tock {
         //props.setProperty("bootstrap.servers", "39.96.136.7:9092");//集群地址
         //props.setProperty("bootstrap.servers", "39.96.139.70:9092");//集群地址
 
-        props.setProperty("bootstrap.servers", "10.10.41.242:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.41.243:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.41.251:9092");//集群地址
+        props.setProperty("bootstrap.servers", "Hadoop101:9092");//集群地址
+        props.setProperty("bootstrap.servers", "10.10.42.242:9092");//集群地址
+        props.setProperty("bootstrap.servers", "10.10.42.243:9092");//集群地址
 
 //        props.setProperty("bootstrap.servers", "192.168.88.161:9092");//集群地址
 //        props.setProperty("bootstrap.servers", "192.168.88.162:9092");//集群地址
@@ -49,55 +49,10 @@ public class Tock {
         props.setProperty("group.id", "flink2");//消费者组id
         props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
         //使用连接参数创建FlinkKafkaConsumer/kafkaSource
-        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("metadata2", new SimpleStringSchema(), props);
+        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("da_warning", new SimpleStringSchema(), props);
         //使用kafkaSource
         DataStream<String> kafkaDS = env.addSource(kafkaSource);
-
-        //kafkaDS.print();
-
-        //TODO 2.transformation
-        /*DataStream<TraceBean> dataStream = kafkaDS.flatMap(new FlatMapFunction<String, TraceBean>() {
-
-            @Override
-            public void flatMap(String value, Collector<TraceBean> out) throws Exception {
-                try {
-                    //System.out.println(value);
-                    if (!value.startsWith("trace") || value.indexOf("[") < 0 || value.indexOf("]") < 0) {
-                        //System.out.println("非迹线数据");
-                        return;
-                    }
-                    String[] split = value.split("\\|");
-                    if (split.length != 16) {
-                        //System.out.println("数组长度不够");
-                        return;
-                    }
-                    //List<Double> jsonArray = JSONArray.parseArray(split[15],Double.class);
-                    TraceBean traceBean = new TraceBean();
-                    traceBean.setKeywords(split[2] + "-" + split[3] + "-" + split[4]);
-                    traceBean.setEventType(split[0]);
-                    traceBean.setTraceInTime(split[1]);
-                    traceBean.setDeviceId(split[2]);
-                    traceBean.setStartFreq(split[3]);
-                    traceBean.setStopFreq(split[4]);
-                    traceBean.setRbw(split[5]);
-                    traceBean.setRefLevel(split[6]);
-                    traceBean.setAtt(split[7]);
-                    traceBean.setGain(split[8]);
-                    traceBean.setPointNum(split[9]);
-                    traceBean.setSegmentNum(split[10]);
-                    traceBean.setBtraceName(split[11]);
-                    traceBean.setEthreshold(split[12]);
-                    traceBean.setIndexName(split[13]);
-                    traceBean.setCompoundCode(split[14]);
-                    traceBean.setData(split[15]);
-                    out.collect(traceBean);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-            }
-        });*/
-
+        System.out.println("123123123");
         kafkaDS.print();
         //kafkaDS.writeAsText("s3://10.10.41.251:9090/flinkstreamfilesink/data");
         //kafkaDS.addSink(new ckSink());

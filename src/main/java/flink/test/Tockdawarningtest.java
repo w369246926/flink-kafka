@@ -1,4 +1,4 @@
-package flink;
+package flink.test;
 
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONArray;
@@ -26,9 +26,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
-public class Tockdawarning {
+public class Tockdawarningtest {
     public static void main(String[] args) throws Exception {
         ParameterTool parameterTool = ParameterTool.fromArgs(args);
         String second = "15";
@@ -49,9 +52,9 @@ public class Tockdawarning {
         //TODO 1.source
         //准备kafka连接参数
         Properties props = new Properties();
-        props.setProperty("bootstrap.servers", "10.10.42.241:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.42.242:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.42.243:9092");//集群地址
+        props.setProperty("bootstrap.servers", "192.168.88.161:9092");//集群地址
+        props.setProperty("bootstrap.servers", "192.168.88.162:9092");//集群地址
+        props.setProperty("bootstrap.servers", "192.168.88.163:9092");//集群地址
         props.setProperty("group.id", "flink");//消费者组id
         props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
         //使用连接参数创建FlinkKafkaConsumer/kafkaSource
@@ -233,25 +236,20 @@ public class Tockdawarning {
                     @Override
                     public void apply(Object o, TimeWindow timeWindow, Iterable<JSONObject> iterable, Collector<JSONObject> collector) throws Exception {
 
-
+                        //UUID pid = UUID.randomUUID();//归并之后的ID
                         String pid = "";
                         int count = 0;
-                        //记录归并后的数据
                         JSONObject jsonone = null;
                         String date="";
-                        //遍历json第一个循环用于得到本次归并的数据值,用于归并后的展是;
                         for (JSONObject jsonObject : iterable) {
                             if (count == 0) {
-                                //将这第一条数据保存到jsonone里面,目的存到全部告警表,成为归并的表
                                 jsonone = jsonObject;
-                                //获取到这个告警的UUID,存储到这个时段归并的所有告警,以1查全部赋值给PID
+                                //jsonone.put("pid", pid);
                                 Object uuid = jsonone.get("uuid");
                                 pid = String .valueOf(uuid);
                                 break;
-                                //得到值后跳出本次循环,下面循环依然是json中所有的值
                             }
                         }
-                        //第二次遍历json,将归并
                         for (JSONObject jsonObject : iterable) {
                             jsonObject.put("pid", pid);
                             Object date1 = jsonObject.get("date");
@@ -321,7 +319,7 @@ public class Tockdawarning {
         private Statement stmt;
         private  Connection conn;
         //private PreparedStatement preparedStatement;
-        String jdbcUrl = "jdbc:clickhouse://10.10.42.243:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
+        String jdbcUrl = "jdbc:clickhouse://192.168.88.161:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
         @Override
         public void open(Configuration parameters) throws Exception {
             super.open(parameters);
@@ -402,7 +400,7 @@ public class Tockdawarning {
     private Statement stmt;
     private  Connection conn;
     private PreparedStatement preparedStatement;
-    String jdbcUrl = "jdbc:clickhouse://10.10.42.243:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
+    String jdbcUrl = "jdbc:clickhouse://192.168.88.161:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
     @Override
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
@@ -485,7 +483,7 @@ public class Tockdawarning {
         private Statement stmt;
         private  Connection conn;
         private PreparedStatement preparedStatement;
-        String jdbcUrl = "jdbc:clickhouse://10.10.42.243:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
+        String jdbcUrl = "jdbc:clickhouse://192.168.88.161:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
         @Override
         public void open(Configuration parameters) throws Exception {
             super.open(parameters);
@@ -571,7 +569,7 @@ public class Tockdawarning {
         private Statement stmt;
         private  Connection conn;
         private PreparedStatement preparedStatement;
-        String jdbcUrl = "jdbc:clickhouse://10.10.42.243:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
+        String jdbcUrl = "jdbc:clickhouse://192.168.88.161:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
         @Override
         public void open(Configuration parameters) throws Exception {
             super.open(parameters);
