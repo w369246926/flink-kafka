@@ -200,7 +200,7 @@ public class DaWarning {
                 }
             }
         });
-        //2,将数据拆分成3个流,1:归并后全部,2:伪装,3:变形
+        //2,将数据拆分成3个流,1:归并后全部,2:伪装,3:变形.
         DataStream<JSONObject> warning = process.getSideOutput(camouflageandlabel);
         DataStream<JSONObject> camouflage = process.getSideOutput(camouflages);
         DataStream<JSONObject> transformation2 = process.getSideOutput(transformation);
