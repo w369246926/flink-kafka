@@ -103,7 +103,7 @@ public class DaWarning {
                     else if (map1.get("verifyFunctionModuleCode").equals(5)) {
                         map1.put("verifyFunctionModuleCode", "网络伪装");
                         if (map1.get("verifyTypeId").equals(1)) {
-                            map1.put("verifyTypeId", "攻击入侵");
+                            map1.put("verifyTypeId", "回应主机被成功入侵事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP建立了TCP/UDP攻击会话");
@@ -118,21 +118,23 @@ public class DaWarning {
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP的TCP攻击会话结束");
                         } else if (map1.get("verifyTypeId").equals(4)) {
-                            map1.put("verifyTypeId", "疑似横向移动");
+                            map1.put("verifyTypeId", "跳板攻击事件");
                             Object messageDeviceSerialId = jsonObject.get("messageDeviceSerialId");
                             map1.put("incidentdescription", ""+messageDeviceSerialId+"主动发动TCP/UDP请求");
                         } else if (map1.get("verifyTypeId").equals(5)) {
-                            map1.put("verifyTypeId", "IP扫描");
+                            //map1.put("verifyFunctionModuleCode", "网络扫描事件");
+                            map1.put("verifyTypeId", "IP扫描事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"对"+destIp+"伪装地址进行PING攻击");
                         } else if (map1.get("verifyTypeId").equals(7)) {
-                            map1.put("verifyTypeId", "攻击入侵");
+                            //map1.put("verifyFunctionModuleCode", "网络扫描事件");
+                            map1.put("verifyTypeId", "端口扫描事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP的TCP/UDP/ICMP攻击会话超时");
                         } else if (map1.get("verifyTypeId").equals(8)) {
-                            map1.put("verifyTypeId", "攻击入侵");
+                            map1.put("verifyTypeId", "持续入侵事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP的TCP/UDP会话未结束");
@@ -151,12 +153,13 @@ public class DaWarning {
                         } else if (map1.get("verifyTypeId").equals(15)) {
                             map1.put("verifyTypeId", "回应ARP广播告警");
                         } else if (map1.get("verifyTypeId").equals(0)) {
-                            map1.put("verifyTypeId", "端口扫描");
+                            //map1.put("verifyFunctionModuleCode", "网络扫描事件");
+                            map1.put("verifyTypeId", "端口扫描事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+" 扫描未伪装的"+destIp+"服务端口");
                         }else if (map1.get("verifyTypeId").equals(6)) {
-                            map1.put("verifyTypeId", "疑似横向移动");
+                            map1.put("verifyTypeId", "跳板攻击事件");
                             Object messageDeviceSerialId = jsonObject.get("messageDeviceSerialId");
                             map1.put("incidentdescription", ""+messageDeviceSerialId+"回应主机主动发送ICMP请求");
                         }else {
@@ -167,7 +170,8 @@ public class DaWarning {
                     else if (map1.get("verifyFunctionModuleCode").equals(10)){
                         map1.put("verifyFunctionModuleCode", "网络伪装");
                         if (map1.get("verifyTypeId").equals(2)) {
-                            map1.put("verifyTypeId", "IP扫描");
+                            //map1.put("verifyFunctionModuleCode", "网络扫描事件");
+                            map1.put("verifyTypeId", "IP扫描事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"对"+destIp+"伪装地址进行ARP请求");
