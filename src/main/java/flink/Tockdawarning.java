@@ -3,12 +3,14 @@ package flink;
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
@@ -52,8 +54,8 @@ public class Tockdawarning {
         props.setProperty("bootstrap.servers", "10.10.42.241:9092");//集群地址
         props.setProperty("bootstrap.servers", "10.10.42.242:9092");//集群地址
         props.setProperty("bootstrap.servers", "10.10.42.243:9092");//集群地址
-        props.setProperty("group.id", "flink");//消费者组id
-        props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
+        props.setProperty("group.id", "flink0812");//消费者组id
+        //props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
         //使用连接参数创建FlinkKafkaConsumer/kafkaSource
         FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("da_warning", new SimpleStringSchema(), props);
         //使用kafkaSource
@@ -218,6 +220,10 @@ public class Tockdawarning {
         label1.addSink(new ckSinkA());
 
         //5,变形进行按照时间归并:5分钟归并一次,取时间最大值,并存储到A表
+        KeyedStream<JSONObject, String> jsonObjectStringKeyedStream = camouflage.keyBy(json -> json.getJSONObject("basicMessageBasicList").getString("verifyTypeId"));
+
+        System.out.println(jsonObjectStringKeyedStream);
+
         SingleOutputStreamOperator<JSONObject> apply = transformation2.keyBy(t -> {
             //Map map = new HashMap();
             Object verifyTypeId = null;

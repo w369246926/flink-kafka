@@ -6,11 +6,13 @@ import flink.dawarning.sink.CWarningSink;
 import flink.dawarning.sink.TWarningSink;
 import flink.dawarning.sink.WarningSink;
 import flink.dawarning.transformation.WarningFlatMap;
+
 import flink.dawarning.transformation.WindowApply;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -31,41 +33,42 @@ public class DaWarning {
         String second = "15";
         if (parameterTool.has("second")) {
             second = parameterTool.get("second");
-            System.out.println("指定了归并时间:" + second +"秒");
+            System.out.println("未指定了归并时间,默认:" + second +"秒");
         } else {
-            second = "20";
+            second = "120";
             System.out.println("设置指定归并时间使用 --second ,没有指定使用默认的:" + second +"秒");
         }
         long wmin = Long.parseLong(second);
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(1);
+        env.setParallelism(3);
+        //1.1 开启CheckPoint
+        //env.enableCheckpointing(5 * 60000L, CheckpointingMode.EXACTLY_ONCE);
+        //env.getCheckpointConfig().setCheckpointTimeout(10 * 60000L);
+        //env.getCheckpointConfig().setMaxConcurrentCheckpoints(2);
+        //env.setRestartStrategy(RestartStrategies.fixedDelayRestart(3, 5000L));
 
-        //准备kafka连接参数
-        Properties props = new Properties();
-        props.setProperty("bootstrap.servers", "10.10.42.241:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.42.242:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.42.243:9092");//集群地址
-        props.setProperty("group.id", "flink");//消费者组id
-        props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
-        //使用连接参数创建FlinkKafkaConsumer/kafkaSource
-        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("da_warning", new SimpleStringSchema(), props);
-        //使用kafkaSource
-        DataStream<String> kafkaDS = env.addSource(kafkaSource).setParallelism(1);
+        //1.2 设置状态后端
+        //env.setStateBackend(new HashMapStateBackend());
+        //env.getCheckpointConfig().setCheckpointStorage("hdfs://hadoop102:8020/211126/ck");
+        //System.setProperty("HADOOP_USER_NAME", "atguigu");
+        //TODO:1使用自定义kafkaSource
+        String topic = "da_warning";
+        String groupid = "flink";
+        DataStreamSource<String> stringDataStreamSource = env.addSource(MyKafkaUtil.getFlinkKafkaConsumer(topic, groupid));
 
-        DataStream<JSONObject> dataStream = kafkaDS.flatMap(new WarningFlatMap());
+        DataStream<JSONObject> dataStream = stringDataStreamSource.flatMap(new WarningFlatMap());
 
 //2,将数据拆分成两个流,1:伪装和标签,2:变形
         OutputTag<JSONObject> camouflages = new OutputTag<JSONObject>("伪装和标签", TypeInformation.of(JSONObject.class));
         OutputTag<JSONObject> camouflageandlabel = new OutputTag<JSONObject>("标签", TypeInformation.of(JSONObject.class));
         OutputTag<JSONObject> transformation = new OutputTag<JSONObject>("变形",TypeInformation.of(JSONObject.class)){};
+        //SingleOutputStreamOperator<JSONObject> process = dataStream.process(new WarningProcess());
         SingleOutputStreamOperator<JSONObject> process = dataStream.process(new ProcessFunction<JSONObject, JSONObject>() {
             @Override
             public void processElement(JSONObject jsonObject, Context context, Collector<JSONObject> collector) throws Exception {
                 //获取到数据体basicMessageBasicList
                 JSONArray basicMessageBasicList = jsonObject.getJSONArray("basicMessageBasicList");
-//                Map map = new HashMap();
-                //遍历告警JSON
                 for (int i = 0; i < basicMessageBasicList.size(); i++) {
                     Map map1 = basicMessageBasicList.getJSONObject(i);
                     Object verifyFunctionModuleCode = map1.get("verifyFunctionModuleCode");
@@ -101,40 +104,46 @@ public class DaWarning {
                         context.output(camouflageandlabel, jsonObject);
                     }
                     else if (map1.get("verifyFunctionModuleCode").equals(5)) {
-                        map1.put("verifyFunctionModuleCode", "网络伪装");
+                        //map1.put("verifyFunctionModuleCode", "网络伪装");
                         if (map1.get("verifyTypeId").equals(1)) {
-                            map1.put("verifyTypeId", "回应主机被成功入侵事件");
+                            map1.put("verifyFunctionModuleCode", "攻陷回应主机事件");
+                            map1.put("verifyTypeId", "攻击会话建立事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP建立了TCP/UDP攻击会话");
                         } else if (map1.get("verifyTypeId").equals(2)) {
-                            map1.put("verifyTypeId", "攻击入侵");
+                            map1.put("verifyFunctionModuleCode", "攻陷回应主机事件");
+                            map1.put("verifyTypeId", "攻击会话结束事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP的TCP攻击会话结束");
                         } else if (map1.get("verifyTypeId").equals(3)) {
+                            map1.put("verifyFunctionModuleCode", "网络扫描事件");
                             map1.put("verifyTypeId", "攻击入侵");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP的TCP攻击会话结束");
                         } else if (map1.get("verifyTypeId").equals(4)) {
-                            map1.put("verifyTypeId", "跳板攻击事件");
+                            map1.put("verifyFunctionModuleCode", "跳板攻击事件");
+                            map1.put("verifyTypeId", "基于tcp/udp的横向探测事件");
                             Object messageDeviceSerialId = jsonObject.get("messageDeviceSerialId");
                             map1.put("incidentdescription", ""+messageDeviceSerialId+"主动发动TCP/UDP请求");
                         } else if (map1.get("verifyTypeId").equals(5)) {
-                            //map1.put("verifyFunctionModuleCode", "网络扫描事件");
+                            map1.put("verifyFunctionModuleCode", "网络扫描事件");
                             map1.put("verifyTypeId", "IP扫描事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"对"+destIp+"伪装地址进行PING攻击");
                         } else if (map1.get("verifyTypeId").equals(7)) {
-                            //map1.put("verifyFunctionModuleCode", "网络扫描事件");
+                            map1.put("verifyFunctionModuleCode", "网络扫描事件");
                             map1.put("verifyTypeId", "端口扫描事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP的TCP/UDP/ICMP攻击会话超时");
                         } else if (map1.get("verifyTypeId").equals(8)) {
-                            map1.put("verifyTypeId", "持续入侵事件");
+                            map1.put("verifyFunctionModuleCode", "攻陷回应主机事件");
+                            map1.put("verifyTypeId", "回攻击会话持续事件");
+                            //map1.put("verifyTypeId", "持续入侵事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP的TCP/UDP会话未结束");
@@ -153,13 +162,14 @@ public class DaWarning {
                         } else if (map1.get("verifyTypeId").equals(15)) {
                             map1.put("verifyTypeId", "回应ARP广播告警");
                         } else if (map1.get("verifyTypeId").equals(0)) {
-                            //map1.put("verifyFunctionModuleCode", "网络扫描事件");
+                            map1.put("verifyFunctionModuleCode", "网络扫描事件");
                             map1.put("verifyTypeId", "端口扫描事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+" 扫描未伪装的"+destIp+"服务端口");
                         }else if (map1.get("verifyTypeId").equals(6)) {
-                            map1.put("verifyTypeId", "跳板攻击事件");
+                            map1.put("verifyFunctionModuleCode", "跳板攻击事件");
+                            map1.put("verifyTypeId", "基于ICMP的横向探测事件");
                             Object messageDeviceSerialId = jsonObject.get("messageDeviceSerialId");
                             map1.put("incidentdescription", ""+messageDeviceSerialId+"回应主机主动发送ICMP请求");
                         }else {
@@ -168,15 +178,17 @@ public class DaWarning {
                         context.output(camouflages, jsonObject);
                     }
                     else if (map1.get("verifyFunctionModuleCode").equals(10)){
-                        map1.put("verifyFunctionModuleCode", "网络伪装");
+                        //map1.put("verifyFunctionModuleCode", "网络伪装");
                         if (map1.get("verifyTypeId").equals(2)) {
-                            //map1.put("verifyFunctionModuleCode", "网络扫描事件");
+                            map1.put("verifyFunctionModuleCode", "网络扫描事件");
                             map1.put("verifyTypeId", "IP扫描事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"对"+destIp+"伪装地址进行ARP请求");
                         } else if (map1.get("verifyTypeId").equals(3)) {
-                            map1.put("verifyTypeId", "疑似横向移动");
+                            map1.put("verifyFunctionModuleCode", "跳板攻击事件");
+                            map1.put("verifyTypeId", "基于ARP的横向探测事件");
+                            //map1.put("verifyTypeId", "疑似横向移动");
                             Object messageDeviceSerialId = jsonObject.get("messageDeviceSerialId");
                             map1.put("incidentdescription", ""+messageDeviceSerialId+"回应主机主动发送ARP请求");
                         } else if (map1.get("verifyTypeId").equals(4)) {
@@ -211,7 +223,6 @@ public class DaWarning {
 
         //5,变形进行按照时间归并:5分钟归并一次,取时间最大值,并存储到A表
         SingleOutputStreamOperator<JSONObject> tapply = transformation2.keyBy(t -> {
-                    //Map map = new HashMap();
                     Object verifyTypeId = null;
                     JSONArray basicMessageBasicList = t.getJSONArray("basicMessageBasicList");
                     for (int i = 0; i < basicMessageBasicList.size(); i++) {

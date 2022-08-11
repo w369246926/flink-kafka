@@ -29,6 +29,7 @@ public class WarningFlatMap implements FlatMapFunction<String, JSONObject>{
             jsonObject.put("uuid", IdUtil.simpleUUID());
             long date = System.currentTimeMillis();
             jsonObject.put("date", date);
+            jsonObject.put("event_level", "0");
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
             String currenttime = dateFormat.format(date);
             jsonObject.put("currenttime", currenttime);

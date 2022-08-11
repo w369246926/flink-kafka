@@ -45,8 +45,9 @@ public class CWarningSink extends RichSinkFunction<JSONObject> {
         String sql= "";
         StringBuilder columns = new StringBuilder("uuid,date,currenttime,messageProtocolVersion,messageDeviceTypeId,messageProductId,messageDeviceDescribe,messageEmbeddedSoftwareVersion," +
                 "messageChipVersion,messageDeviceSerialId,messagePackageId,messageLoadLength,messageNumber,messageSplitSerialId," +
-                "verifyCode,reserved,pid,");
+                "verifyCode,reserved,pid,event_level,");
         StringBuilder values = new StringBuilder();
+        try {
         values.append("'");
         values.append (value.getOrDefault("uuid","-1")).append("','");
         values.append (value.getOrDefault("date","-1")).append("','");
@@ -65,8 +66,9 @@ public class CWarningSink extends RichSinkFunction<JSONObject> {
         values.append (value.getOrDefault("verifyCode","-1")).append("','");
         values.append (value.getOrDefault("reserved","-1")).append("','");
         values.append (value.getOrDefault("pid","-1")).append("','");
-        //values.append (value.getOrDefault("size","-1")).append("','");
-        try {
+        values.append (value.getOrDefault("event_level","0")).append("','");
+        //values.append ("0").append("','");
+
             //获取所有告警的JSON
             JSONArray basicMessageBasicList = value.getJSONArray("basicMessageBasicList");
             Map map = new HashMap();
@@ -83,6 +85,7 @@ public class CWarningSink extends RichSinkFunction<JSONObject> {
                 columns.append("tempVerifyCode,messageSplit");
                 values.append (value.getOrDefault("tempVerifyCode","-1")).append("','");
                 values.append (value.getOrDefault("messageSplit","-1")).append("'");
+
                 String sqlkey = columns.toString();
                 String sqlvalue = values.toString();
                 sql = "INSERT INTO default."+tablename+" ( "+ sqlkey+" ) VALUES ( "+sqlvalue +" )";

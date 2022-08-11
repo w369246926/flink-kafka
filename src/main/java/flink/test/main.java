@@ -10,13 +10,18 @@ public class main {
         //String result = s.replace("[","\"").replace("]","\"").replace("'","|");
         // 3. 输出结果
         //System.out.println(result);
-        String s = "1,2,3,4";
-        String[] split = s.split(",");
-        for (int i = 0; i < split.length; i++) {
-            System.out.println(i);
-            System.out.println(split[i]);
-            System.out.println(split.length);
-            System.out.println("123123");
-        }
+//        String s = "1,2,3,4";
+//        String[] split = s.split(",");
+//        for (int i = 0; i < split.length; i++) {
+//            System.out.println(i);
+//            System.out.println(split[i]);
+//            System.out.println(split.length);
+//            System.out.println("123123");
+//            }
+
+
+        long date = System.currentTimeMillis();
+        System.out.println(date);
+        System.out.println(date +20);
     }
 }
