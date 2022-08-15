@@ -16,6 +16,7 @@ import ru.yandex.clickhouse.BalancedClickhouseDataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -55,6 +56,11 @@ public class Tockmatedata {
                         System.out.println("yes[]----" + replace);
                         JSONObject jsonObject = JSONObject.parseObject(replace);
                         jsonObject.put("uuid", IdUtil.simpleUUID());
+                        long date = System.currentTimeMillis();
+                        jsonObject.put("date", date);
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                        String currenttime = dateFormat.format(date);
+                        jsonObject.put("currenttime", currenttime);
                         collector.collect(jsonObject);
                     } else {
                         //无大括号json
@@ -84,7 +90,7 @@ public class Tockmatedata {
     }
 
     private static class ckSink extends RichSinkFunction<JSONObject> {
-        String key = "uuid,device_id,device_ip,interface_icon,data_type,time,sip,sipv6,smac,sport," +
+        String key = "date,uuid,device_id,device_ip,interface_icon,data_type,time,sip,sipv6,smac,sport," +
                 "dip,dipv6,dmac,dport,network_protocol,transport_protocol,session_protocol,app_protocol," +
                 "sess_id,log_type,mail_time,from,to,cc,subject,bcc,returnpath,received,send_server_domain," +
                 "send_server_ip,content_encoding,content_length,mail_size,file_list,client_total_byte," +
@@ -96,7 +102,7 @@ public class Tockmatedata {
                 "http_res_heade,dns_type,host,mx,cname,res_code_one,count,dns_query_type,aa,tc,rd,ra," +
                 "rep_rr_info,aa_rr_info,append_rr_info,rr_ttl,dns_req_len,dns_res_len,dns_req_rr_type," +
                 "dns_res_rr_type,dns_res_ip,version_two,username,dbname,req_cmd,res_code,file_dir," +
-                "file_name,file_type,file_size,file_md5" ;
+                "file_name,file_type,file_size,file_md5,currenttime" ;
         String sql= "";
         private Statement stmt;
         private  Connection conn;

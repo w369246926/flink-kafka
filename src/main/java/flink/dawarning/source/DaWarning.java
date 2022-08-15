@@ -119,7 +119,7 @@ public class DaWarning {
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP的TCP攻击会话结束");
                         } else if (map1.get("verifyTypeId").equals(3)) {
                             map1.put("verifyFunctionModuleCode", "网络扫描事件");
-                            map1.put("verifyTypeId", "攻击入侵");
+                            map1.put("verifyTypeId", "IP扫描事件");
                             Object srcIp = map1.get("srcIp");
                             Object destIp = map1.get("destIp");
                             map1.put("incidentdescription", ""+srcIp+"与"+destIp+"伪装IP的TCP攻击会话结束");
@@ -200,6 +200,7 @@ public class DaWarning {
                         else {
                             map1.put("verifyTypeId", "模拟");
                         }
+                        context.output(camouflages, jsonObject);
                     }
                     else {
                         map1.put("verifyFunctionModuleCode", "安全标签");
