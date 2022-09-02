@@ -2,11 +2,13 @@ package flink;
 
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSONObject;
+import flink.dawarning.source.MyKafkaUtil;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.shaded.hadoop2.org.apache.http.client.config.RequestConfig;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
@@ -25,25 +27,15 @@ public class Tockmatedata {
     public static void main(String[] args) throws Exception {
         //TODO 0.env
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        //env.setRuntimeMode(RuntimeExecutionMode.AUTOMATIC);
-        RequestConfig.custom().setConnectionRequestTimeout(120 * 1000)
-                .setSocketTimeout(120 * 1000).setConnectTimeout(120 * 1000).build();
-
+        env.setParallelism(3);
 
         //TODO 1.source
-        //准备kafka连接参数
-        Properties props = new Properties();
-        props.setProperty("bootstrap.servers", "10.10.41.242:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.41.243:9092");//集群地址
-        props.setProperty("bootstrap.servers", "10.10.41.251:9092");//集群地址
-        props.setProperty("group.id", "flink1540");//消费者组id
-        props.setProperty("auto.offset.reset", "latest");//latest有offset记录从记录位置开始消费,没有记录从最新的/最后的消息开始消费 /earliest有offset记录从记录位置开始消费,没有记录从最早的/最开始的消息开始消费
-        //使用连接参数创建FlinkKafkaConsumer/kafkaSource
-        FlinkKafkaConsumer<String> kafkaSource = new FlinkKafkaConsumer<String>("ahmetadata1", new SimpleStringSchema(), props);
-        //使用kafkaSource
-        DataStream<String> kafkaDS = env.addSource(kafkaSource).setParallelism(3);;
+        String topic = "ah_metadata";
+        String groupid = "flink09021639";
+        DataStreamSource<String> stringDataStreamSource = env.addSource(MyKafkaUtil.getFlinkKafkaConsumer(topic, groupid));
+
         //TODO 2.transformation
-        DataStream<JSONObject> dataStream = kafkaDS.flatMap(new FlatMapFunction<String, JSONObject>() {
+        DataStream<JSONObject> dataStream = stringDataStreamSource.flatMap(new FlatMapFunction<String, JSONObject>() {
             @Override
             public void flatMap(String s, Collector<JSONObject> collector) throws Exception {
                 //有大括号[json]
@@ -69,6 +61,11 @@ public class Tockmatedata {
                         String replace = s.replace("\\\\", "");
                         JSONObject jsonObject = JSONObject.parseObject(replace);
                         jsonObject.put("uuid", IdUtil.simpleUUID());
+                        long date = System.currentTimeMillis();
+                        jsonObject.put("date", date);
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                        String currenttime = dateFormat.format(date);
+                        jsonObject.put("currenttime", currenttime);
                         collector.collect(jsonObject);
                     }
                 }catch (Exception e){
@@ -77,13 +74,10 @@ public class Tockmatedata {
             }
         });
 
-
         //TODO 3.sink
-
 
         //dataStream.print();
         dataStream.addSink(new ckSink()).setParallelism(1);
-
 
         env.execute("安恒原始日志数据");
 
@@ -106,8 +100,7 @@ public class Tockmatedata {
         String sql= "";
         private Statement stmt;
         private  Connection conn;
-        private PreparedStatement preparedStatement;
-        String jdbcUrl = "jdbc:clickhouse://10.10.41.251:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
+        String jdbcUrl = "jdbc:clickhouse://10.10.42.241:8123/default";//39.96.136.60:8123,,10.10.41.242:8123,10.10.41.251:8123
         @Override
         public void open(Configuration parameters) throws Exception {
             super.open(parameters);
@@ -116,7 +109,7 @@ public class Tockmatedata {
             //获取数据库连接
             conn = new BalancedClickhouseDataSource(jdbcUrl).getConnection("default", "123456");
             stmt = conn.createStatement();
-            //preparedStatement = conn.prepareStatement(sql);
+
         }
         @Override
         public void close() throws Exception {
@@ -144,7 +137,7 @@ public class Tockmatedata {
                     }
                 }
                     String sqlvalue = values.toString();
-                    sql = "INSERT INTO default.bus_ahmetadata_local ( "+ key+" ) VALUES ( "+sqlvalue +" )";
+                    sql = "INSERT INTO default.bus_ahmetadata ( "+ key+" ) VALUES ( "+sqlvalue +" )";
                 System.out.println(sql);
                     stmt.executeQuery(sql);
 
