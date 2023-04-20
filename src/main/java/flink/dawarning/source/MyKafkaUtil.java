@@ -11,6 +11,7 @@ import java.util.Properties;
 
 public class MyKafkaUtil {
     private static final String KAFKA_SERVER = "10.10.42.241:9092,10.10.42.242:9092,10.10.42.243:9092";
+
     private static final String OFFSET = "latest";
 
     public static FlinkKafkaConsumer<String> getFlinkKafkaConsumer(String topic, String groupId) {

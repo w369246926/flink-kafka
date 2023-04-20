@@ -18,7 +18,7 @@ package flink.test;
 	    private static String CHARSET_NAME="gbk";
 	    //private static String UDP_URL="10.10.42.241";
 		//private static String UDP_URL="39.96.136.7";
-		private static String UDP_URL="127.0.0.1";
+		private static String UDP_URL="192.168.18.31";
 	    private static Integer UDP_PORT=20182;
 
 	    public static DatagramSocket getDatagramSocket()throws SocketException {
