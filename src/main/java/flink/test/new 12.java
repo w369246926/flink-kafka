@@ -156,5 +156,107 @@
 //        String insertSQL="insert into "+dataBaseName+"."+tablename+" ( "+colums+" ) values ( "+values+")";
 //        return insertSQL;
 //    }
-//
+//import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.cert.X509Certificate;
+
+public class HttpsClientExample {
+    public static void main(String[] args) throws IOException {
+        // 定义 HTTPS 请求 URL
+        String requestUrl = "https://example.com/api/resource";
+
+        // 忽略 SSL 证书验证（生产环境中请勿使用此配置，应配置信任的证书）
+        try {
+            SSLContext sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(null, new TrustManager[] { new X509TrustManager() {
+                public X509Certificate[] getAcceptedIssuers() {
+                    return null;
+                }
+
+                public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                }
+
+                public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                }
+            } }, new java.security.SecureRandom());
+
+            HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 创建 URL 对象
+        URL url = new URL(requestUrl);
+
+        // 打开连接
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+
+        // 设置请求方法（GET、POST 等）
+        connection.setRequestMethod("GET");
+
+        // 获取响应代码
+        int responseCode = connection.getResponseCode();
+        System.out.println("Response Code: " + responseCode);
+
+        // 读取响应内容
+        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        String line;
+        StringBuilder responseContent = new StringBuilder();
+
+        while ((line = reader.readLine()) != null) {
+            responseContent.append(line);
+        }
+        reader.close();
+
+        // 打印响应内容
+        System.out.println("Response Content: " + responseContent.toString());
+
+        // 关闭连接
+        connection.disconnect();
+    }
+}
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+public class HttpsServerExample {
+    public static void main(String[] args) throws IOException {
+        // 创建 HTTP 服务器，监听指定端口
+        HttpServer server = HttpServer.create(new java.net.InetSocketAddress(8080), 0);
+
+        // 创建上下文路径，并将处理器绑定到路径
+        server.createContext("/api/resource", new MyHandler());
+
+        // 启动服务器
+        server.start();
+    }
+
+    static class MyHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            // 构建响应内容
+            String response = "Hello, this is a secure resource!";
+
+            // 设置响应头
+            t.getResponseHeaders().set("Content-Type", "text/plain");
+            t.sendResponseHeaders(200, response.length());
+
+            // 获取输出流，并写入响应内容
+            OutputStream os = t.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+    }
+}
 //}
