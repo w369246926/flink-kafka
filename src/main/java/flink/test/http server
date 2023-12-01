@@ -24,5 +24,9 @@ public class SimpleHttpServer {
             os.write(response.getBytes());
             os.close();
         }
-    }
+    }<dependency>
+    <groupId>com.sun.net.httpserver</groupId>
+    <artifactId>http</artifactId>
+    <version>20070405</version>
+</dependency>
 }
