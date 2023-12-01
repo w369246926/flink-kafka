@@ -91,5 +91,63 @@ public class SimpleHttpsServer {
     }
 }
 
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslHandler;
 
+import javax.net.ssl.SSLEngine;
+import java.io.File;
+
+public class NettyHttpsServer {
+
+    public static void main(String[] args) throws Exception {
+        // Specify the SSL keystore and password
+        String keyStorePath = "path/to/your/keystore.jks";
+        String keyStorePassword = "password";
+
+        // Setup SSL context
+        SslContext sslContext = SslContextBuilder.forServer(new File(keyStorePath), keyStorePassword).build();
+
+        // Configure the server
+        EventLoopGroup bossGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
+
+        try {
+            ServerBootstrap b = new ServerBootstrap();
+            b.group(bossGroup, workerGroup)
+             .channel(NioServerSocketChannel.class)
+             .childHandler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    SSLEngine engine = sslContext.newEngine(ch.alloc());
+                    ch.pipeline().addLast(new SslHandler(engine));
+                    ch.pipeline().addLast(new MyHandler());
+                }
+             })
+             .option(ChannelOption.SO_BACKLOG, 128)
+             .childOption(ChannelOption.SO_KEEPALIVE, true);
+
+            // Start the server
+            ChannelFuture f = b.bind(8443).sync();
+
+            // Wait until the server socket is closed
+            f.channel().closeFuture().sync();
+        } finally {
+            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully();
+        }
+    }
+
+    static class MyHandler extends io.netty.channel.ChannelInboundHandlerAdapter {
+        // Your server-side handling logic here
+    }
+}
 }
