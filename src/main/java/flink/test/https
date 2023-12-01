@@ -1,0 +1,56 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
+
+public class HttpsClient {
+
+    public static void main(String[] args) {
+        try {
+            // 创建一个URL对象，指定要访问的https服务端地址
+            URL url = new URL("https://localhost:8443/");
+
+            // 打开一个HttpsURLConnection连接
+            HttpsURLConnection conn = (HttpsURLConnection) url.openConnection();
+
+            // 设置连接属性
+            conn.setDoOutput(true); // 允许输出
+            conn.setDoInput(true); // 允许输入
+            conn.setUseCaches(false); // 不使用缓存
+            conn.setRequestMethod("POST"); // 设置请求方法为POST
+            conn.setRequestProperty("Content-Type", "application/json"); // 设置内容类型为JSON
+
+            // 设置请求数据
+            String data = "{\"name\":\"Alice\",\"message\":\"Hello\"}";
+
+            // 获取输出流，发送请求数据
+            OutputStream out = conn.getOutputStream();
+            out.write(data.getBytes());
+            out.flush();
+            out.close();
+
+            // 获取响应码
+            int responseCode = conn.getResponseCode();
+            System.out.println("Response Code: " + responseCode);
+
+            // 获取输入流，读取响应数据
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String line;
+            StringBuilder response = new StringBuilder();
+            while ((line = in.readLine()) != null) {
+                response.append(line);
+            }
+            in.close();
+
+            // 打印响应数据
+            System.out.println("Response Data: " + response.toString());
+
+            // 关闭连接
+            conn.disconnect();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
