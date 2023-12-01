@@ -29,4 +29,67 @@ public class SimpleHttpServer {
     <artifactId>http</artifactId>
     <version>20070405</version>
 </dependency>
+
+import com.sun.net.httpserver.HttpsServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
+import com.sun.net.httpserver.HttpsExchange;
+import com.sun.net.httpserver.HttpsHandler;
+
+import javax.net.ssl.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.security.KeyStore;
+
+public class SimpleHttpsServer {
+
+    public static void main(String[] args) throws Exception {
+        // Load the keystore
+        char[] password = "password".toCharArray();
+        KeyStore keyStore = KeyStore.getInstance("JKS");
+        keyStore.load(SimpleHttpsServer.class.getClassLoader().getResourceAsStream("keystore.jks"), password);
+
+        // Setup the key manager factory
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+        keyManagerFactory.init(keyStore, password);
+
+        // Setup the trust manager factory
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
+        trustManagerFactory.init(keyStore);
+
+        // Setup the SSL context
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+
+        // Setup HTTPS parameters
+        HttpsParameters httpsParameters = new HttpsParameters();
+        httpsParameters.setSSLContext(sslContext);
+
+        // Create an HTTPS server
+        HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(8443), 0);
+        httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
+            public void configure(HttpsParameters params) {
+                params.setSSLParameters(sslContext.getDefaultSSLParameters());
+            }
+        });
+        httpsServer.createContext("/hello", new MyHandler());
+        httpsServer.setExecutor(null);
+        httpsServer.start();
+    }
+
+    static class MyHandler implements HttpsHandler {
+        @Override
+        public void handle(HttpsExchange t) throws IOException {
+            // Handle the incoming request
+            String response = "好的";
+            t.sendResponseHeaders(200, response.length());
+            OutputStream os = t.getResponseBody();
+            os.write(response.getBytes());
+            os.close();
+        }
+    }
+}
+
+
 }
